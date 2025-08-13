@@ -1,5 +1,4 @@
-# AWS-CloudOps-Scripts
-Repository for Scripts I utilize to manage Cloud Operations within AWS
+# AWS-Security-Review-Script
 
 A comprehensive bash script for analyzing AWS CloudTrail logs to detect suspicious security activities across your AWS environment.
 
