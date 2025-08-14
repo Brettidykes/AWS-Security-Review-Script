@@ -4,12 +4,12 @@ Two AWS CloudTrail security analysis tools that automatically detect critical se
 
 ## Script Options
 
-### Multi-Region Script (`multi_region_security_script.sh`)
+### Multi-Region Script (`mult-region-security-review.sh`)
 **Advanced version** with intelligent multi-region support and comprehensive coverage.
 
 **Best for:** Enterprise environments, distributed resources, complex CloudTrail setups
 
-### Simple Clean Script (`simple_clean_script.sh`) 
+### Simple Clean Script (`simple-security-script.sh`) 
 **Streamlined version** focused on single-region deployments with faster execution.
 
 **Best for:** Development environments, single-region deployments, quick security checks
