@@ -1,21 +1,91 @@
-# AWS-Security-Review-Script
+# CloudTrail Security Review Scripts
 
-A comprehensive bash script for analyzing AWS CloudTrail logs to detect suspicious security activities across your AWS environment.
+Two AWS CloudTrail security analysis tools that automatically detect critical security events. Choose the version that best fits your environment complexity.
+
+## Script Options
+
+### Multi-Region Script (`multi_region_security_script.sh`)
+**Advanced version** with intelligent multi-region support and comprehensive coverage.
+
+**Best for:** Enterprise environments, distributed resources, complex CloudTrail setups
+
+### Simple Clean Script (`simple_clean_script.sh`) 
+**Streamlined version** focused on single-region deployments with faster execution.
+
+**Best for:** Development environments, single-region deployments, quick security checks
+
+## Quick Start Guide
+
+### Choose Your Script
+
+**If you're unsure which to use:**
+```bash
+# Try the simple version first
+./simple_clean_script.sh
+
+# If you need multi-region coverage:
+./multi_region_security_script.sh -c
+```
+
+**Multi-Region Script:**
+```bash
+# Auto-detect and smart scan
+./multi_region_security_script.sh
+
+# Comprehensive scan (all regions with resources)
+./multi_region_security_script.sh -c
+
+# Specific region
+./multi_region_security_script.sh -r us-west-2
+```
+
+**Simple Clean Script:**
+```bash
+# Single command - scans current region
+./simple_clean_script.sh
+```
 
 ## Overview
 
-This script performs automated security analysis of CloudTrail events to identify potential security threats, policy violations, and suspicious activities. It's designed for monthly security reviews and can be run directly in AWS CloudShell.
+This script provides automated security monitoring by analyzing CloudTrail events to detect:
+- Root account usage
+- Failed login attempts  
+- Unauthorized resource changes
+- Identity and access management modifications
+- Security group changes
+- Resource deletions and terminations
 
-## Prerequisites
+The script is designed to work across different AWS environments including commercial, GovCloud, China regions, and region-restricted accounts without any hardcoded assumptions.
 
-- AWS CLI configured with appropriate permissions
-- Access to CloudTrail Event History API
-- `jq` installed (available by default in AWS CloudShell)
-- CloudTrail enabled in your AWS account
+## Features
 
-## Required Permissions
+### Multi-Region Intelligence
+- **Auto-detects CloudTrail configuration** (single-region vs multi-region trails)
+- **Smart region selection** based on where your events are actually stored
+- **Comprehensive mode** to scan all regions with resources
+- **No hardcoded regions** - works in any AWS partition
 
-The script requires the following IAM permissions:
+### Security Coverage
+- **Critical events:** Root usage, failed logins, privilege escalations
+- **Identity management:** User/role creation and deletion
+- **Resource protection:** EC2, RDS, S3 deletion monitoring
+- **Network security:** Security group modifications
+- **Monitoring integrity:** CloudTrail tampering detection
+
+### Flexible Deployment
+- **Multiple CloudTrail configurations** supported
+- **Cross-region resource detection**
+- **Rate limiting protection** with automatic retries
+- **Cost-optimized** scanning strategies
+
+## Requirements
+
+### Prerequisites
+- **AWS CLI** v2.0+ installed and configured
+- **jq** JSON processor
+- **Valid AWS credentials** with CloudTrail read permissions
+
+### IAM Permissions Required
 ```json
 {
     "Version": "2012-10-17",
@@ -24,6 +94,10 @@ The script requires the following IAM permissions:
             "Effect": "Allow",
             "Action": [
                 "cloudtrail:LookupEvents",
+                "cloudtrail:DescribeTrails",
+                "ec2:DescribeRegions",
+                "ec2:DescribeInstances",
+                "rds:DescribeDBInstances",
                 "sts:GetCallerIdentity"
             ],
             "Resource": "*"
@@ -34,133 +108,381 @@ The script requires the following IAM permissions:
 
 ## Installation
 
-1. Clone this repository or download the script
-2. Make the script executable:
-   ```bash
-   chmod +x enhanced_security_review.sh
-   ```
+### Download Both Scripts
+```bash
+# Download multi-region script
+curl -O https://your-repo/multi_region_security_script.sh
+chmod +x multi_region_security_script.sh
+
+# Download simple clean script  
+curl -O https://your-repo/simple_clean_script.sh
+chmod +x simple_clean_script.sh
+
+# Verify dependencies
+aws --version
+jq --version
+```
+
+### Choose Your Version
+| Criteria | Multi-Region Script | Simple Clean Script |
+|----------|-------------------|-------------------|
+| **Resources in multiple regions** | Recommended | Limited coverage |
+| **Single region deployment** | Works but overkill | Perfect fit |
+| **Complex CloudTrail setup** | Auto-detects | May miss events |
+| **Speed priority** | 1-5 minutes | 30-60 seconds |
+| **Development/testing** | Unnecessary complexity | Ideal |
+| **Production/enterprise** | Comprehensive |  May miss issues |
 
 ## Usage
 
-### AWS CloudShell (Recommended)
-1. Open AWS CloudShell from the AWS Console
-2. Upload or create the script file
-3. Run the script:
-   ```bash
-   ./enhanced_security_review.sh
-   ```
+### Multi-Region Script Usage
+```bash
+# Auto-detect configuration and run security scan
+./multi_region_security_script.sh
 
-### Local Environment
-1. Ensure AWS CLI is configured with proper credentials
-2. Set your target region:
-   ```bash
-   aws configure set region us-east-1
-   ```
-3. Run the script:
-   ```bash
-   ./enhanced_security_review.sh
-   ```
+# Comprehensive mode - scan all regions with resources (slower but thorough)
+./multi_region_security_script.sh -c
 
-## Security Checks Performed
+# Specify custom region
+./multi_region_security_script.sh -r us-west-2
 
-### Critical Security Checks
-- **Root Account Usage**: Detects any root account activity (should be zero)
-- **Failed Login Attempts**: Identifies brute force or unauthorized access attempts
+# Show help
+./multi_region_security_script.sh -h
+```
 
-### Identity & Access Management
-- IAM policy modifications and attachments
-- User creation and deletion events
-- Role creation and deletion events
-- Group membership changes
+### Simple Clean Script Usage
+```bash
+# Single command - scans your current AWS region
+./simple_clean_script.sh
 
-### Network & Security
-- Security group rule changes (ingress/egress)
-- VPC creation and deletion events
-- Network access control modifications
+# No additional options - designed for simplicity
+```
 
-### Resource Management
-- EC2 instance terminations and stops
-- RDS database deletions
-- S3 bucket deletions
-- EBS volume deletions
+### Command Options (Multi-Region Script Only)
+```bash
+-c, --comprehensive    Check all regions with resources (slower but thorough)
+-r, --region REGION   Set primary region
+-h, --help           Show help information
+```
 
-### Monitoring & Logging
-- CloudTrail logging disabled events
-- CloudTrail deletion attempts
+### Usage Examples
 
-## Output Interpretation
+#### Standard Security Review
+```bash
+./multi_region_security_script.sh
+```
+**Best for:** Daily security checks, single-region deployments, multi-region trails
 
-### Status Indicators
-- **OK**: No suspicious events found - normal operation
-- **WARNING**: Events found that require review and verification
-- **CRITICAL**: Events found that require immediate investigation
+#### Comprehensive Multi-Region Scan
+```bash
+./multi_region_security_script.sh -c
+```
+**Best for:** Weekly comprehensive reviews, distributed resources, audit compliance
 
-### Event Details
-For each flagged event, the script displays:
-- Timestamp of the event
-- Username or service that performed the action
-- Source IP address (or "Internal" for AWS service calls)
+#### Specific Region Focus
+```bash
+./multi_region_security_script.sh -r eu-west-1
+```
+**Best for:** Region-specific investigations, troubleshooting
 
-## Sample Output
+## Understanding the Output
 
+### Multi-Region Script Output
 ```
 ========================================
-ENHANCED CLOUDTRAIL SECURITY REVIEW
+MULTI-REGION CLOUDTRAIL SECURITY REVIEW
 Account: 123456789012
-Region: us-east-1
-Generated: Wed Aug 13 18:30:00 UTC 2025
+Primary Region: us-west-2
+Comprehensive Mode: false
+Generated: Thu Aug 14 2025
+========================================
+
+Analyzing CloudTrail configuration...
+Multi-region trail 'main-trail' in us-east-1 (captures all regions)
+Trail regions: us-east-1
+Global events in: us-east-1
+
+DETECTION STRATEGY:
+Multi-region trail detected - all events captured centrally
+   Strategy: Check trail home regions for all events
+
+CRITICAL SECURITY CHECKS:
+================================
+Checking: ROOT ACCOUNT USAGE
+  WARNING: FOUND 2 EVENTS - REVIEW REQUIRED
+    Region us-east-1: 2 events
+      2025-08-14T10:30:15+00:00 | AssumeRole | 203.0.113.1
+      2025-08-13T15:22:33+00:00 | CreateAccessKey | Internal
+  TOTAL: 2 events across 1 regions
+```
+
+### Simple Clean Script Output
+```
+========================================
+CLOUDTRAIL SECURITY REVIEW
+Account: 123456789012
+Region: us-west-2
+Generated: Thu Aug 14 2025
 Period: Last 30 days
 ========================================
 
 CRITICAL SECURITY CHECKS:
 ================================
-Checking: ROOT ACCOUNT USAGE
-  OK: No events found
-
-Checking: Failed Login Attempts (Critical)
-  OK: No failed logins
-
-IDENTITY & ACCESS MANAGEMENT:
-================================
-Checking: IAM Policy Modifications
+Checking: ROOT ACCOUNT USAGE (Critical)
   WARNING: FOUND 2 EVENTS - REVIEW REQUIRED
-    2025-08-10T14:30:20+00:00 | admin.user@company.com | 203.0.113.1
-    2025-08-08T09:15:45+00:00 | admin.user@company.com | 203.0.113.1
+    2025-08-14T10:30:15+00:00 | AssumeRole | 203.0.113.1
+    2025-08-13T15:22:33+00:00 | CreateAccessKey | Internal
+
+Checking: Failed Login Attempts  
+  OK: No failed logins detected
 ```
 
-## Best Practices
+### Result Interpretation
+- **OK:** Normal activity, no action required
+- **WARNING:** Events found that require review
+- **CRITICAL:** Immediate investigation required
+- **ERROR:** Technical issues with the scan
 
-1. **Run Monthly**: Execute this script as part of your monthly security review process
-2. **Multi-Region Analysis**: Run the script in each AWS region where you have resources
-3. **Document Findings**: Keep records of legitimate activities to establish baselines
-4. **Investigate Anomalies**: Always verify the business justification for flagged events
-5. **Time-Based Analysis**: Pay special attention to off-hours administrative activities
+## Date Ranges
 
-## Limitations
+The script uses different time windows based on event criticality:
 
-- **90-Day History**: CloudTrail Event History API is limited to the last 90 days
-- **Region-Specific**: Events are analyzed only for the currently configured AWS region
-- **API Rate Limits**: The script includes timeout protection but may need to be re-run if rate limited
-- **Event Volume**: High-activity accounts may experience timeouts on certain queries
+| Event Type | Time Range | Rationale |
+|------------|------------|-----------|
+| Root Account Usage | 30 days | Critical events, should be rare |
+| Failed Login Attempts | 7 days | Security incidents, recent activity most relevant |
+| User/Role Creation | 30 days | Identity changes, medium-term tracking |
+| User/Role Deletion | 30 days | Critical changes, longer retention |
+| EC2 Terminations | 7 days | High-frequency, recent activity focus |
+| RDS/S3 Deletions | 30 days | Critical data operations |
+| Security Group Changes | 7 days | Network security, recent changes |
+| CloudTrail Tampering | 30 days | Monitoring integrity |
+
+**Note:** CloudTrail LookupEvents API has a maximum 90-day lookback period.
+
+## Cost Information
+
+### AWS API Costs
+- **CloudTrail LookupEvents:** ~$0.10 per 1,000 API calls
+- **First 1,000 calls/month:** FREE
+- **Multi-region script:** 15-50 API calls per run (depending on mode)
+- **Simple clean script:** 10-15 API calls per run
+
+### Cost Examples by Script Type
+
+#### Multi-Region Script
+| Usage Pattern | Monthly Calls | Cost |
+|---------------|---------------|------|
+| Daily standard scans | ~500 calls | $0.00 (free tier) |
+| Daily comprehensive scans | ~1,500 calls | ~$0.05 |
+| Weekly comprehensive scans | ~400 calls | $0.00 (free tier) |
+
+#### Simple Clean Script  
+| Usage Pattern | Monthly Calls | Cost |
+|---------------|---------------|------|
+| Daily scans | ~350 calls | $0.00 (free tier) |
+| Multiple daily scans | ~700 calls | $0.00 (free tier) |
+| 10 accounts, daily scans | ~3,500 calls | ~$0.25 |
+
+**Bottom line:** Both scripts are essentially free for typical usage patterns. Simple clean script uses ~30% fewer API calls.
 
 ## Troubleshooting
 
-### "Error querying events"
-- Verify CloudTrail is enabled in your account and region
-- Check that your AWS credentials have the required permissions
-- Ensure you're in the correct AWS region
+### Common Issues (Both Scripts)
 
-### Script Hangs or Times Out
-- The script includes 30-second timeouts for each query
-- High-activity accounts may need manual investigation of specific event types
-- Consider analyzing shorter time periods for busy environments
+#### "Unable to determine AWS region"
+```bash
+# Solution: Set region explicitly
+aws configure set region us-west-2
+# OR
+export AWS_DEFAULT_REGION=us-west-2
+```
 
-### No Events Found for Expected Activities
-- Verify the time period (script analyzes last 30 days by default)
-- Check that you're analyzing the correct AWS region
-- Confirm CloudTrail is capturing the event types you're looking for
+#### "No active CloudTrail found" (Multi-region script)
+```bash
+# Check CloudTrail status
+aws cloudtrail describe-trails
+aws cloudtrail get-trail-status --name YOUR_TRAIL_NAME
+```
+
+#### Rate limiting errors
+```bash
+# Multi-region script: Use single region mode
+./multi_region_security_script.sh -r us-west-2
+
+# Simple clean script: Wait 10-15 minutes between runs
+./simple_clean_script.sh
+```
+
+#### Permission denied errors (Both scripts)
+```bash
+# Verify credentials and permissions
+aws sts get-caller-identity
+aws cloudtrail lookup-events --max-items 1
+```
+
+### Script-Specific Issues
+
+#### Multi-Region Script: "All checks show errors"
+**Likely cause:** Complex CloudTrail configuration not detected properly
+**Solution:** Try simple clean script or specify region manually:
+```bash
+./multi_region_security_script.sh -r your-known-region
+```
+
+#### Simple Clean Script: "Missing events you expect to see"
+**Likely cause:** Events are in a different region than your current one
+**Solution:** Try multi-region script or check other regions manually:
+```bash
+./multi_region_security_script.sh -c
+```
+
+### Debug Mode
+```bash
+# Add debug output
+set -x
+./multi_region_security_script.sh
+set +x
+```
+
+## Which Script Should You Use?
+
+### Decision Tree
+
+```
+Do you have resources in multiple AWS regions?
+├─ YES → Do you need comprehensive coverage?
+│   ├─ YES → Use Multi-Region Script with -c flag
+│   └─ NO → Use Multi-Region Script (standard mode)
+└─ NO → Do you prioritize speed and simplicity?
+    ├─ YES → Use Simple Clean Script
+    └─ NO → Either script works (Simple Clean recommended)
+```
+
+### Detailed Comparison
+
+| Your Situation | Recommended Script | Command |
+|----------------|-------------------|---------|
+| **Single region, development** | Simple Clean | `./simple_clean_script.sh` |
+| **Single region, production** | Either (Simple Clean faster) | `./simple_clean_script.sh` |
+| **Multi-region, not sure where resources are** | Multi-Region comprehensive | `./multi_region_security_script.sh -c` |
+| **Multi-region, know your CloudTrail setup** | Multi-Region standard | `./multi_region_security_script.sh` |
+| **Complex organization/enterprise** | Multi-Region comprehensive | `./multi_region_security_script.sh -c` |
+| **Quick daily security check** | Simple Clean | `./simple_clean_script.sh` |
+| **Weekly comprehensive audit** | Multi-Region comprehensive | `./multi_region_security_script.sh -c` |
+| **Troubleshooting specific region** | Multi-Region with region flag | `./multi_region_security_script.sh -r us-west-2` |
+
+### Migration Path
+**Start simple, scale up as needed:**
+1. **Begin with Simple Clean Script** for daily monitoring
+2. **Add Multi-Region Script** when you expand to multiple regions
+3. **Use comprehensive mode** for periodic deep audits
+
+### Scenario 1: Single-Region Trail
+**Setup:** CloudTrail enabled in us-west-2 only  
+**Script behavior:** Checks us-west-2 for all events  
+**Coverage:** Regional events only (may miss some global events)
+
+### Scenario 2: Multi-Region Trail  
+**Setup:** Trail in us-east-1 with multi-region enabled  
+**Script behavior:** Checks us-east-1 for all events worldwide  
+**Coverage:** Complete global coverage
+
+### Scenario 3: Multiple Trails
+**Setup:** Trails in us-east-1 and eu-west-1  
+**Script behavior:** Checks both regions  
+**Coverage:** Complete for both regions
+
+### Scenario 4: Distributed Resources
+**Setup:** Resources across multiple regions, single-region trail  
+**Script behavior:** With `-c` flag, scans all resource regions  
+**Coverage:** Complete with comprehensive mode
+
+## Security Considerations
+
+### Data Privacy
+- Script only reads CloudTrail metadata
+- No sensitive data is stored or transmitted
+- All analysis performed locally
+
+### Access Control  
+- Requires read-only CloudTrail permissions
+- Cannot modify any AWS resources
+- Safe to run in production environments
+
+### Audit Trail
+- Script execution doesn't generate CloudTrail events
+- Uses read-only AWS APIs
+- Maintains compliance with monitoring requirements
+
+## Best Practices
+
+### Frequency Recommendations
+
+#### Simple Clean Script
+- **Development accounts:** Daily scans
+- **Single-region production:** Daily scans  
+- **Testing environments:** Weekly scans
+
+#### Multi-Region Script
+- **Multi-region production:** Daily standard, weekly comprehensive
+- **Enterprise environments:** Daily comprehensive  
+- **Compliance audits:** Comprehensive mode as needed
+- **Post-incident analysis:** Immediate comprehensive scan
+
+### Integration Examples
+
+#### Simple Clean Script
+```bash
+# Daily cron job
+0 8 * * * /path/to/simple_clean_script.sh > /var/log/aws-security-$(date +\%Y\%m\%d).log
+
+# Quick Slack alert for critical findings
+./simple_clean_script.sh | grep -q "CRITICAL" && curl -X POST $SLACK_WEBHOOK -d "Security alert in $(aws configure get region)"
+```
+
+#### Multi-Region Script
+```bash
+# Weekly comprehensive review
+0 8 * * 1 /path/to/multi_region_security_script.sh -c > /var/log/aws-security-comprehensive-$(date +\%Y\%m\%d).log
+
+# Daily smart scan with email report
+./multi_region_security_script.sh | mail -s "AWS Security Review $(date)" security@company.com
+
+# Multi-account scanning
+for account in prod staging dev; do
+  aws-vault exec $account -- ./multi_region_security_script.sh -c
+done
+```
 
 
-## Security Notice
+### Feature Requests
+- Additional event types to monitor
+- Integration with other AWS services
+- Output format improvements
 
-This script is designed for security analysis and should be run by authorized personnel only. Always follow your organization's security policies and procedures when analyzing CloudTrail logs.
+## Changelog
+
+### v2.0 (Current)
+**Two Script Options:**
+- **Multi-Region Script:** Advanced version with intelligent multi-region support
+- **Simple Clean Script:** Streamlined version for single-region deployments
+
+**New Features:**
+- Multi-region resource detection
+- Eliminated hardcoded regions (works in GovCloud, China, etc.)
+- Enhanced error handling and retry logic
+- Comprehensive mode for distributed deployments
+- Simplified alternative for faster execution
+
+**Improvements:**
+- Region auto-detection works in all AWS partitions
+- Better CloudTrail configuration analysis
+- Reduced API costs with smart querying
+- Professional emoji-free output
+
+### v1.0
+- Basic CloudTrail event scanning
+- Single-region focus
+- Core security event detection
+
