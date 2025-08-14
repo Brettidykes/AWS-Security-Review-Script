@@ -9,7 +9,7 @@ Two AWS CloudTrail security analysis tools that automatically detect critical se
 
 **Best for:** Enterprise environments, distributed resources, complex CloudTrail setups
 
-### Simple Clean Script (`simple-security-script.sh`) 
+### Simple Clean Script (`simple-security-review.sh`) 
 **Streamlined version** focused on single-region deployments with faster execution.
 
 **Best for:** Development environments, single-region deployments, quick security checks
